@@ -4,6 +4,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.SPI;
+
+import com.kauailabs.navx.frc.AHRS;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -14,6 +17,8 @@ import edu.wpi.first.wpilibj.Talon;
  */
 public class Robot extends IterativeRobot
 {
+    AHRS navX;
+    
     Talon talonOne, talonTwo, talonThree;
     Joystick mainJoystick;
     
@@ -27,13 +32,15 @@ public class Robot extends IterativeRobot
     {
         try
         {
+            navX = new AHRS(SPI.Port.kMXP);
+            
             talonOne = new Talon(0);
             talonTwo = new Talon(1);
             talonThree = new Talon(2);
             
             mainJoystick = new Joystick(0);
             
-            chassis = new Chassis(talonOne, talonTwo, talonThree, mainJoystick);
+            chassis = new Chassis(talonOne, talonTwo, talonThree, mainJoystick, navX);
         } catch(Exception e)
         {
             DriverStation.reportError(e.getMessage(), true);

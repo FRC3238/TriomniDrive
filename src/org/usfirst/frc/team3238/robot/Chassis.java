@@ -2,16 +2,21 @@ package org.usfirst.frc.team3238.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import com.kauailabs.navx.frc.AHRS;
 
 /**
  * Created by aaron on 11/4/2016.
  */
 public class Chassis
 {
+    private AHRS navX;
+    
     private Talon[] talons = new Talon[4];
     private Joystick joy;
     
     private boolean enabled;
+    private static final double DEADZONE = 0.1;
     
     /**
      * Constructor to pass talons to chassis class, set joystick to be used, and
@@ -22,8 +27,10 @@ public class Chassis
      * @param talonThree Third talon, clockwise of first and second
      * @param joystick   Joystick object to control chassis
      */
-    Chassis(Talon talonOne, Talon talonTwo, Talon talonThree, Joystick joystick)
+    Chassis(Talon talonOne, Talon talonTwo, Talon talonThree, Joystick joystick, AHRS navX)
     {
+        this.navX = navX;
+        
         talons[1] = talonOne;
         talons[2] = talonTwo;
         talons[3] = talonThree;
@@ -39,6 +46,7 @@ public class Chassis
     public void init()
     {
         setEnabled(true);
+        navX.reset();
     }
     
     /**
@@ -67,16 +75,36 @@ public class Chassis
     {
         double[] speeds = { 0.0, 0.0, 0.0, 0.0 };
         
+        SmartDashboard.putNumber("Robot Direction", navX.getAngle());
+        SmartDashboard.putNumber("Joystick Direction", joy.getDirectionDegrees());
+        
+        if(joy.getRawButton(2))
+        {
+            navX.reset();
+        }
+        
+        if(joy.getRawButton(11) && enabled)
+        {
+            setEnabled(false);
+        } else if(joy.getRawButton(11) && !enabled)
+        {
+            setEnabled(true);
+        }
+        
         if(enabled)
         {
-            double x = joy.getX();
-            double y = joy.getY();
-            double twist = joy.getTwist();
+            double x = getCartesianX(joy.getDirectionDegrees(), joy.getMagnitude());
+            double y = getCartesianY(joy.getDirectionDegrees(), joy.getMagnitude());
+            double twist = joy.getTwist() * 0.75;
             
             speeds[1] = getSpeedOne(x, y, twist);
             speeds[2] = getSpeedTwo(x, y, twist);
             speeds[3] = getSpeedThree(x, y, twist);
             
+            SmartDashboard.putNumber("Speed one", getSpeedOne(x, y, twist));
+            SmartDashboard.putNumber("Speed two", getSpeedTwo(x, y, twist));
+            SmartDashboard.putNumber("Speed three", getSpeedThree(x, y, twist));
+
             talons[1].set(speeds[1]);
             talons[2].set(speeds[2]);
             talons[3].set(speeds[3]);
@@ -102,9 +130,9 @@ public class Chassis
         {
             double[] speeds = { 0.0, 0.0, 0.0, 0.0 };
             
-            speeds[1] = getSpeedOne(x, y, twist);
+            speeds[1] = getSpeedThree(x, y, twist);
             speeds[2] = getSpeedTwo(x, y, twist);
-            speeds[3] = getSpeedThree(x, y, twist);
+            speeds[3] = getSpeedOne(x, y, twist);
             
             talons[1].set(speeds[1]);
             talons[2].set(speeds[2]);
@@ -126,7 +154,8 @@ public class Chassis
      */
     private double getSpeedOne(double x, double y, double twist)
     {
-        return ((-1 / 2) * x) - ((Math.sqrt(3) / 2) * y) + twist;
+//        return ((-1 / 2) * getAboveDeadzone(x)) - ((Math.sqrt(3) / 2) * getAboveDeadzone(y)) + getAboveDeadzone(twist);
+        return (-getAboveDeadzone(x) / 2 ) - ((Math.sqrt(3) / 2) * getAboveDeadzone(y)) + getAboveDeadzone(twist / 1.6, true);
     }
     
     /**
@@ -138,7 +167,8 @@ public class Chassis
      */
     private double getSpeedTwo(double x, double y, double twist)
     {
-        return ((-1 / 2) * x) + ((Math.sqrt(3) / 2) * y) + twist;
+//        return ((-1 / 2) * getAboveDeadzone(x)) + ((Math.sqrt(3) / 2) * getAboveDeadzone(y)) + getAboveDeadzone(twist);
+        return (-getAboveDeadzone(x) / 2) + ((Math.sqrt(3) / 2) * getAboveDeadzone(y)) + getAboveDeadzone(twist / 1.6, true);
     }
     
     /**
@@ -150,6 +180,59 @@ public class Chassis
      */
     private double getSpeedThree(double x, double y, double twist)
     {
-        return x + twist;
+//        return getAboveDeadzone(x) + getAboveDeadzone(twist);
+        return getAboveDeadzone(x) + getAboveDeadzone(twist / 1.6, true);
     }
-}
+    
+    private double getAboveDeadzone(double val)
+    {
+        if(Math.abs(val) >= DEADZONE)
+        {
+            return val;
+        } else
+        {
+            return 0.0;
+        }
+    }
+    
+    private double getAboveDeadzone(double val, boolean twist)
+    {
+        if(Math.abs(val) >= 2 * DEADZONE)
+        {
+            return val;
+        } else
+        {
+            return 0.0;
+        }
+    }
+    
+    private double getCartesianX(double direction, double magnitude)
+    {
+        double degrees = navX.getAngle();
+        direction -= degrees;
+        while(direction > 360)
+        {
+            direction -= 360;
+        }
+        while(direction < 0)
+        {
+            direction += 360;
+        }
+        
+        return (magnitude * Math.cos(Math.toRadians(direction)));
+    }
+    private double getCartesianY(double direction, double magnitude)
+    {
+        double degrees = navX.getAngle();
+        direction -= degrees;
+        while(direction > 360)
+        {
+            direction -= 360;
+        }
+        while(direction < 0)
+        {
+            direction += 360;
+        }
+        
+        return (magnitude * Math.sin(Math.toRadians(direction)));
+    }
