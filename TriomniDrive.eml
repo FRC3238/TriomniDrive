@@ -8,4 +8,7 @@
 	<lib name="networktables" scope="COMPILE">
 		<srcroot url="jar://$networktables.sources$!/"/>
 	</lib>
+	<levels>
+		<level name="navx_frc" value="project"/>
+	</levels>
 </component>
