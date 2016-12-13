@@ -105,7 +105,6 @@ public class Robot extends IterativeRobot
      */
     public void testPeriodic()
     {
-        SmartDashboard.putNumber("DB/Slider 0", 2.54);
         SmartDashboard.putBoolean("DB/Button 1", chassis.isEnabled());
         chassis.run();
     }
