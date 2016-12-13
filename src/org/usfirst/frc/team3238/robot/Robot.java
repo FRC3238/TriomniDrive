@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.SPI;
 
 import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -40,7 +41,8 @@ public class Robot extends IterativeRobot
             
             mainJoystick = new Joystick(0);
             
-            chassis = new Chassis(talonOne, talonTwo, talonThree, mainJoystick, navX);
+            chassis = new Chassis(talonOne, talonTwo, talonThree, mainJoystick,
+                    navX);
         } catch(Exception e)
         {
             DriverStation.reportError(e.getMessage(), true);
@@ -52,7 +54,13 @@ public class Robot extends IterativeRobot
      */
     public void disabledPeriodic()
     {
-        chassis.setEnabled(false);
+        try
+        {
+            chassis.setEnabled(false);
+        } catch(Exception e)
+        {
+            DriverStation.reportError(e.getMessage(), false);
+        }
     }
     
     /**
@@ -84,7 +92,12 @@ public class Robot extends IterativeRobot
      */
     public void teleopPeriodic()
     {
-        chassis.run();
+        chassis.pidRun();
+    }
+    
+    public void testInit()
+    {
+        chassis.init();
     }
     
     /**
@@ -92,7 +105,7 @@ public class Robot extends IterativeRobot
      */
     public void testPeriodic()
     {
-        
+        SmartDashboard.putBoolean("DB/Button 1", chassis.isEnabled());
+        chassis.run();
     }
-    
 }
