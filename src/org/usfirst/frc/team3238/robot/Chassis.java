@@ -3,6 +3,7 @@ package org.usfirst.frc.team3238.robot;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -16,6 +17,7 @@ public class Chassis
     private AHRS navX;
     
     private Talon[] talons = new Talon[4];
+    private Encoder[] encoders = new Encoder[4];
     private Joystick joy;
     
     private boolean enabled;
@@ -35,14 +37,18 @@ public class Chassis
      * @param talonThree Third talon, clockwise of first and second
      * @param joystick   Joystick object to control chassis
      */
-    Chassis(Talon talonOne, Talon talonTwo, Talon talonThree, Joystick joystick,
-            AHRS navX)
+    Chassis(Talon talonOne, Talon talonTwo, Talon talonThree,
+            Encoder encoderOne, Encoder encoderTwo, Encoder encoderThree,
+            Joystick joystick, AHRS navX)
     {
         this.navX = navX;
         
         talons[1] = talonOne;
         talons[2] = talonTwo;
         talons[3] = talonThree;
+        encoders[1] = encoderOne;
+        encoders[2] = encoderTwo;
+        encoders[3] = encoderThree;
         setEnabled(false);
         
         joy = joystick;
@@ -57,6 +63,15 @@ public class Chassis
         GyroDrive.reinit();
         setEnabled(true);
         navX.reset();
+        resetEncoders();
+    }
+    
+    private void resetEncoders()
+    {
+        for(int i = 1; i < encoders.length; i++)
+        {
+            encoders[i].reset();
+        }
     }
     
     /**
@@ -149,6 +164,10 @@ public class Chassis
         if(joy.getRawButton(2))
         {
             navX.reset();
+        }
+        if(joy.getRawButton(1))
+        {
+            resetEncoders();
         }
         
         if(joy.getRawButton(11) && enabled && !changeEnable)
@@ -365,6 +384,9 @@ public class Chassis
         SmartDashboard
                 .putString("DB/String 1", "Twist:        " + joy.getTwist());
         SmartDashboard.putString("DB/String 2", "Twist Adjust: " + twist);
+        SmartDashboard.putString("DB/String 5", "Encoder 1: " + encoders[1].get() + " " + encoders[1].getRate());
+        SmartDashboard.putString("DB/String 6", "Encoder 2: " + encoders[2].get() + " " + encoders[2].getRate());
+        SmartDashboard.putString("DB/String 7", "Encoder 3: " + encoders[3].get() + " " + encoders[3].getRate());
         SmartDashboard.putNumber("Speed one", getSpeedOne(x, y, twist));
         SmartDashboard.putNumber("Speed two", getSpeedTwo(x, y, twist));
         SmartDashboard.putNumber("Speed three", getSpeedThree(x, y, twist));
