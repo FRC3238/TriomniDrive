@@ -24,7 +24,7 @@ public class Robot extends IterativeRobot
     Talon talonOne, talonTwo, talonThree;
     Encoder encoderOne, encoderTwo, encoderThree;
     Joystick mainJoystick;
-    
+    Joystick assistJoystick;
     Chassis chassis;
     
     /**
@@ -46,9 +46,9 @@ public class Robot extends IterativeRobot
             encoderThree = new Encoder(4, 5);
             
             mainJoystick = new Joystick(0);
-            
+            assistJoystick = new Joystick(1);
             chassis = new Chassis(talonOne, talonTwo, talonThree, encoderOne,
-                    encoderTwo, encoderThree, mainJoystick, navX);
+                    encoderTwo, encoderThree, mainJoystick, assistJoystick, navX);
         } catch(Exception e)
         {
             DriverStation.reportError(e.getMessage(), true);
@@ -111,7 +111,6 @@ public class Robot extends IterativeRobot
      */
     public void testPeriodic()
     {
-        SmartDashboard.putBoolean("DB/Button 1", chassis.isEnabled());
         chassis.run();
     }
 }
