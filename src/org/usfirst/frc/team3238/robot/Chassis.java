@@ -211,6 +211,20 @@ public class Chassis
             speeds[2] = getSpeedTwo(x, y, twist);
             speeds[3] = getSpeedThree(x, y, twist);
             
+            double highVal = 1.0;
+            for(int i = 1; i < speeds.length; i++)
+            {
+                if(speeds[i] > highVal)
+                {
+                    highVal = speeds[i];
+                }
+            }
+            
+            for(int i = 1; i < speeds.length; i++)
+            {
+                speeds[i] /= highVal;
+            }
+            
             dataDump(x, y, twist);
             
             talons[1].set(speeds[1]);
@@ -384,11 +398,20 @@ public class Chassis
         return (magnitude * Math.sin(Math.toRadians(direction)));
     }
     
+    /**
+     * Gets new value of twist for each wheel given the center of rotation and
+     * coordinates of each wheel.
+     *
+     * @param twist  rotation speed
+     * @param wheelX x coordinate of wheel
+     * @param wheelY y coordinate of wheel
+     * @return adjusted twist speed
+     */
     private double getAdjustedTwist(double twist, double wheelX, double wheelY)
     {
         double adjustedTwist;
-        double magnitude = joyTwo.getMagnitude();
-        double direction = joyTwo.getDirectionDegrees();
+        double magnitude = 2 * joyTwo.getMagnitude();
+        double direction = 2 * joyTwo.getDirectionDegrees();
         double x = getCartesianX(direction, magnitude);
         double y = getCartesianY(direction, magnitude);
         adjustedTwist = Math
@@ -452,14 +475,6 @@ public class Chassis
         double encX = getEncX(encOne, encTwo, encThree);
         double encY = getEncY(encOne, encThree, encX);
         double encTwist = getEncTwist(encThree, encX);
-        //        SmartDashboard
-        //                .putString("DB/String 0", "Raw Twist:    " + navX.getRate());
-        //        SmartDashboard
-        //                .putString("DB/String 1", "Twist:        " + joyOne.getTwist());
-        //        SmartDashboard.putString("DB/String 2", "Twist Adjust: " + twist);
-        //        SmartDashboard.putString("DB/String 5", "Encoder 1: " + encoders[1].get() + " " + encoders[1].getRate());
-        //        SmartDashboard.putString("DB/String 6", "Encoder 2: " + encoders[2].get() + " " + encoders[2].getRate());
-        //        SmartDashboard.putString("DB/String 7", "Encoder 3: " + encoders[3].get() + " " + encoders[3].getRate());
         SmartDashboard.putString("DB/String 0", "X:     " + joyOne.getX());
         SmartDashboard.putString("DB/String 1", "Y:     " + joyOne.getY());
         SmartDashboard.putString("DB/String 2", "Twist: " + joyOne.getTwist());
