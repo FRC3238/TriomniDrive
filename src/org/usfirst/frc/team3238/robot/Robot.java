@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SPI;
 
 import com.kauailabs.navx.frc.AHRS;
@@ -21,8 +22,9 @@ public class Robot extends IterativeRobot
     AHRS navX;
     
     Talon talonOne, talonTwo, talonThree;
+    Encoder encoderOne, encoderTwo, encoderThree;
     Joystick mainJoystick;
-    
+    Joystick assistJoystick;
     Chassis chassis;
     
     /**
@@ -39,10 +41,14 @@ public class Robot extends IterativeRobot
             talonTwo = new Talon(1);
             talonThree = new Talon(2);
             
-            mainJoystick = new Joystick(0);
+            encoderOne = new Encoder(0, 1);
+            encoderTwo = new Encoder(2, 3);
+            encoderThree = new Encoder(4, 5);
             
-            chassis = new Chassis(talonOne, talonTwo, talonThree, mainJoystick,
-                    navX);
+            mainJoystick = new Joystick(0);
+            assistJoystick = new Joystick(1);
+            chassis = new Chassis(talonOne, talonTwo, talonThree, encoderOne,
+                    encoderTwo, encoderThree, mainJoystick, assistJoystick, navX);
         } catch(Exception e)
         {
             DriverStation.reportError(e.getMessage(), true);
@@ -105,7 +111,6 @@ public class Robot extends IterativeRobot
      */
     public void testPeriodic()
     {
-        SmartDashboard.putBoolean("DB/Button 1", chassis.isEnabled());
         chassis.run();
     }
 }
