@@ -1,11 +1,6 @@
 package org.usfirst.frc.team3238.robot;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.*;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -26,15 +21,17 @@ public class Robot extends IterativeRobot
     Joystick mainJoystick;
     Joystick assistJoystick;
     Chassis chassis;
+    Preferences prefs;
     
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
      */
-    public void robotInit()
+    @Override public void robotInit()
     {
         try
         {
+            prefs = Preferences.getInstance();
             navX = new AHRS(SPI.Port.kMXP);
             
             talonOne = new Talon(0);
@@ -48,7 +45,9 @@ public class Robot extends IterativeRobot
             mainJoystick = new Joystick(0);
             assistJoystick = new Joystick(1);
             chassis = new Chassis(talonOne, talonTwo, talonThree, encoderOne,
-                    encoderTwo, encoderThree, mainJoystick, assistJoystick, navX);
+                    encoderTwo, encoderThree, mainJoystick, assistJoystick,
+                    navX);
+            new Thread(new VisionProc()).start();
         } catch(Exception e)
         {
             DriverStation.reportError(e.getMessage(), true);
@@ -58,21 +57,15 @@ public class Robot extends IterativeRobot
     /**
      * This method is called periodically during disabled
      */
-    public void disabledPeriodic()
+    @Override public void disabledPeriodic()
     {
-        try
-        {
-            chassis.setEnabled(false);
-        } catch(Exception e)
-        {
-            DriverStation.reportError(e.getMessage(), false);
-        }
+        
     }
     
     /**
      * This method is called once at the beginning of autonomous
      */
-    public void autonomousInit()
+    @Override public void autonomousInit()
     {
         
     }
@@ -80,7 +73,7 @@ public class Robot extends IterativeRobot
     /**
      * This method is called periodically during autonomous
      */
-    public void autonomousPeriodic()
+    @Override public void autonomousPeriodic()
     {
         
     }
@@ -88,28 +81,37 @@ public class Robot extends IterativeRobot
     /**
      * This method is called once at the beginning of operator control
      */
-    public void teleopInit()
+    @Override public void teleopInit()
     {
-        chassis.init();
+        chassis.init(prefs.getDouble("Chassis deadzone", chassis.deadzone),
+                prefs.getDouble("Twist deadzone", chassis.twistThresh),
+                prefs.getDouble("Gyro drive P", chassis.gyroP),
+                prefs.getDouble("Gyro drive I", chassis.gyroI));
     }
     
     /**
      * This method is called periodically during operator control
      */
-    public void teleopPeriodic()
+    @Override public void teleopPeriodic()
     {
         chassis.pidRun();
     }
     
-    public void testInit()
+    /**
+     * This method is called once at the beginning of test mode
+     */
+    @Override public void testInit()
     {
-        chassis.init();
+        chassis.init(prefs.getDouble("Chassis deadzone", chassis.deadzone),
+                prefs.getDouble("Twist deadzone", chassis.twistThresh),
+                prefs.getDouble("Gyro drive P", chassis.gyroP),
+                prefs.getDouble("Gyro drive I", chassis.gyroI));
     }
     
     /**
      * This method is called periodically during test mode
      */
-    public void testPeriodic()
+    @Override public void testPeriodic()
     {
         chassis.run();
     }

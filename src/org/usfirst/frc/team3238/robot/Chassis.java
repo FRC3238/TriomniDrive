@@ -21,10 +21,10 @@ public class Chassis
     private boolean enabled;
     boolean changeEnable = false;
     
-    private static final double DEADZONE = 0.1;
-    private static final double TWIST_THRESH = 0.5;
-    private static final double P_CONST = -0.6;
-    private static final double I_CONST = 0.000001;
+    public double deadzone = 0.1;
+    public double twistThresh = 0.5;
+    public double gyroP = -0.6;
+    public double gyroI = 0.000001;
     private static final double WHEEL_ONE_X_CORD = 0.0;
     private static final double WHEEL_ONE_Y_CORD = 1.0;
     private static final double WHEEL_TWO_X_CORD = Math.sqrt(3.0) / 2;
@@ -57,14 +57,19 @@ public class Chassis
         setEnabled(false);
         
         joyOne = joystickOne;
+        joyTwo = joystickTwo;
     }
     
     /**
      * Initializes chassis, to be called in init for each state to be ran in,
      * not in robotInit(). Currently calls enable().
      */
-    public void init()
+    public void init(double deadzone, double twistThresh, double gyroP, double gyroI)
     {
+        this.deadzone = deadzone;
+        this.twistThresh = twistThresh;
+        this.gyroP = gyroP;
+        this.gyroI = gyroI;
         GyroDrive.reinit();
         setEnabled(true);
         navX.reset();
@@ -130,7 +135,7 @@ public class Chassis
             double y = getCartesianY(joyOne.getDirectionDegrees(),
                     joyOne.getMagnitude());
             double twist;
-            if(Math.abs(joyOne.getTwist()) > TWIST_THRESH)
+            if(Math.abs(joyOne.getTwist()) > twistThresh)
             {
                 twist = joyOne.getTwist();
             } else
@@ -200,8 +205,7 @@ public class Chassis
             {
                 
                 twist = GyroDrive.getAdjustedRotationValue(x, y,
-                        (joyOne.getTwist() * joyOne.getTwist()), P_CONST,
-                        I_CONST, 0.25, navX.getRate());
+                        (joyOne.getTwist() * joyOne.getTwist()), gyroP, gyroI, 0.25, navX.getRate());
             } else
             {
                 twist = joyOne.getTwist();
@@ -252,9 +256,9 @@ public class Chassis
         {
             double[] speeds = { 0.0, 0.0, 0.0, 0.0 };
             
-            speeds[1] = getSpeedThree(x, y, twist);
-            speeds[2] = getSpeedTwo(x, y, twist);
-            speeds[3] = getSpeedOne(x, y, twist);
+            speeds[1] = getSpeedThreeAuto(x, y, twist);
+            speeds[2] = getSpeedTwoAuto(x, y, twist);
+            speeds[3] = getSpeedOneAuto(x, y, twist);
             
             talons[1].set(speeds[1]);
             talons[2].set(speeds[2]);
@@ -268,7 +272,7 @@ public class Chassis
     }
     
     /**
-     * Gets speed of motor one. Affects both auto and teleop run methods.
+     * Gets speed of motor one. Affects only teleop run methods.
      *
      * @param x     joystick x value
      * @param y     joystick y value
@@ -277,14 +281,27 @@ public class Chassis
      */
     private double getSpeedOne(double x, double y, double twist)
     {
-        //        return ((-1 / 2) * getAboveTwistDeadzone(x)) - ((Math.sqrt(3) / 2) * getAboveTwistDeadzone(y)) + getAboveTwistDeadzone(twist);
         return (-getAboveDeadzone(x) / 2) - ((Math.sqrt(3) / 2)
                 * getAboveDeadzone(y)) + getAdjustedTwist(twist,
                 WHEEL_ONE_X_CORD, WHEEL_ONE_Y_CORD);
     }
     
     /**
-     * Gets speed of motor two. Affects both auto and teleop run methods.
+     * Gets speed of motor one. Affects only auto run method.
+     *
+     * @param x     joystick x value
+     * @param y     joystick y value
+     * @param twist joystick twist value
+     * @return speed of motor one, 0 - 1
+     */
+    private double getSpeedOneAuto(double x, double y, double twist)
+    {
+        return (-getAboveDeadzone(x) / 2) - ((Math.sqrt(3) / 2)
+                * getAboveDeadzone(y)) + twist;
+    }
+    
+    /**
+     * Gets speed of motor two. Affects only teleop run methods.
      *
      * @param x     joystick x value
      * @param y     joystick y value
@@ -293,14 +310,27 @@ public class Chassis
      */
     private double getSpeedTwo(double x, double y, double twist)
     {
-        //        return ((-1 / 2) * getAboveTwistDeadzone(x)) + ((Math.sqrt(3) / 2) * getAboveTwistDeadzone(y)) + getAboveTwistDeadzone(twist);
         return (-getAboveDeadzone(x) / 2) + ((Math.sqrt(3) / 2)
                 * getAboveDeadzone(y)) + getAdjustedTwist(twist,
                 WHEEL_TWO_X_CORD, WHEEL_TWO_Y_CORD);
     }
     
     /**
-     * Gets speed of motor three. Affects both auto and teleop run methods.
+     * Gets speed of motor two. Affects only auto run method.
+     *
+     * @param x     joystick x value
+     * @param y     joystick y value
+     * @param twist joystick twist value
+     * @return speed of motor two, 0 - 1
+     */
+    private double getSpeedTwoAuto(double x, double y, double twist)
+    {
+        return (-getAboveDeadzone(x) / 2) + ((Math.sqrt(3) / 2)
+                * getAboveDeadzone(y)) + twist;
+    }
+    
+    /**
+     * Gets speed of motor three. Affects only teleop run methods.
      *
      * @param x     joystick x value
      * @param y     joystick y value
@@ -309,9 +339,21 @@ public class Chassis
      */
     private double getSpeedThree(double x, double y, double twist)
     {
-        //        return getAboveTwistDeadzone(x) + getAboveTwistDeadzone(twist);
         return getAboveDeadzone(x) + getAdjustedTwist(twist, WHEEL_THREE_X_CORD,
                 WHEEL_THREE_Y_CORD);
+    }
+    
+    /**
+     * Gets speed of motor three. Affects only auto run method.
+     *
+     * @param x     joystick x value
+     * @param y     joystick y value
+     * @param twist joystick twist value
+     * @return speed of motor three, 0 - 1
+     */
+    private double getSpeedThreeAuto(double x, double y, double twist)
+    {
+        return getAboveDeadzone(x) + twist;
     }
     
     /**
@@ -323,7 +365,7 @@ public class Chassis
      */
     private double getAboveDeadzone(double val)
     {
-        if(Math.sqrt(val * val) > DEADZONE)
+        if(Math.sqrt(val * val) > deadzone)
         {
             return val;
         } else
@@ -341,7 +383,7 @@ public class Chassis
      */
     private boolean getAboveTwistDeadzone(double val)
     {
-        if(Math.abs(val) > TWIST_THRESH)
+        if(Math.abs(val) > twistThresh)
         {
             return true;
         } else
